@@ -1,6 +1,9 @@
 const express = require("express");
 const line = require("@line/bot-sdk");
 const { SessionsClient } = require("@google-cloud/dialogflow-cx");
+['LINE_CHANNEL_ACCESS_TOKEN','LINE_CHANNEL_SECRET','DF_PROJECT','DF_LOCATION','DF_AGENT','GOOGLE_APPLICATION_CREDENTIALS']
+  .forEach(k => { if (!process.env[k]) throw new Error(`Missing env ${k}`); });
+process.on('unhandledRejection', e => console.error('UnhandledRejection:', e));
 
 const app = express();
 app.use(express.json());
