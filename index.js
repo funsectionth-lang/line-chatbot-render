@@ -27,6 +27,8 @@ function detectLang(t = "") {
 }
 
 app.get("/", (_, res) => res.send("OK")); // healthcheck Render
+// Endpoint pour le bouton "Verify" de LINE (retourne 200)
+app.get("/webhook", (_, res) => res.status(200).send("OK"));
 
 // Webhook LINE
 app.post("/webhook", line.middleware(lineConfig), async (req, res) => {
