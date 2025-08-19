@@ -1,9 +1,11 @@
 const express = require("express");
 const line = require("@line/bot-sdk");
 const { SessionsClient } = require("@google-cloud/dialogflow-cx");
-['LINE_CHANNEL_ACCESS_TOKEN','LINE_CHANNEL_SECRET','DF_PROJECT','DF_LOCATION','DF_AGENT','GOOGLE_APPLICATION_CREDENTIALS']
+
+["LINE_CHANNEL_ACCESS_TOKEN", "LINE_CHANNEL_SECRET", "DF_PROJECT", "DF_LOCATION", "DF_AGENT", "GOOGLE_APPLICATION_CREDENTIALS"]
   .forEach(k => { if (!process.env[k]) throw new Error(`Missing env ${k}`); });
-process.on('unhandledRejection', e => console.error('UnhandledRejection:', e));
+
+process.on("unhandledRejection", e => console.error("UnhandledRejection:", e));
 
 const app = express();
 app.use(express.json());
@@ -52,22 +54,24 @@ async function handleEvent(event) {
   const text = (event.message.text || "").trim();
   const lang = detectLang(text);
 
-  const session = dfClient.projectLocationAgentSessionPath(
-    process.env.DF_PROJECT,    // ex: pkjbot-466106
-    process.env.DF_LOCATION,   // ex: asia-southeast1
-    process.env.DF_AGENT,      // ID de l’agent CX
+  // ⚠️ Correction ici : sessionPath prend 4 arguments seulement
+  const sessionPath = dfClient.projectLocationAgentSessionPath(
+    process.env.DF_PROJECT,
+    process.env.DF_LOCATION,
+    process.env.DF_AGENT,
     event.source.userId || `anon-${Date.now()}`
   );
 
   try {
     const [resp] = await dfClient.detectIntent({
-      session,
+      session: sessionPath,
       queryInput: { text: { text }, languageCode: lang },
       queryParams: { timeZone: "Asia/Bangkok" },
     });
 
     const outs = (resp.queryResult.responseMessages || [])
       .flatMap(m => (m.text && m.text.text) ? m.text.text : []);
+
     const messages = (outs.length ? outs : ["ขอบคุณครับ / Thanks!"])
       .slice(0, 5)
       .map(t => ({ type: "text", text: t.substring(0, 990) }));
@@ -75,9 +79,11 @@ async function handleEvent(event) {
     return lineClient.replyMessage(event.replyToken, messages);
   } catch (err) {
     console.error("DF error:", err);
-    return lineClient.replyMessage(event.replyToken, [{ type: "text", text: "Temporary error." }]);
+    return lineClient.replyMessage(event.replyToken, [
+      { type: "text", text: "Temporary error." }
+    ]);
   }
 }
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log("Listening on", port));
+app.listen(port, () => console.log("🚀 Listening on", port));
